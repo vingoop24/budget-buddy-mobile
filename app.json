@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "budget-buddy-mobile",
+    "name": "Budget Buddy",
     "slug": "budget-buddy-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "budgetbuddymobile",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "ios": {
       "icon": "./assets/expo.icon"
     },
@@ -28,17 +28,26 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#111827",
           "android": {
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
           }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Budget Buddy uses your photos to read receipts you choose.",
+          "cameraPermission": "Budget Buddy uses the camera to photograph receipts.",
+          "microphonePermission": false
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "backgroundColor": "#111827"
   }
 }

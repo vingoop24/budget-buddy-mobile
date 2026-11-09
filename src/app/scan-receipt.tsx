@@ -1,126 +1,96 @@
-import * as ImagePicker from "expo-image-picker";
-import { Link } from "expo-router";
-import { useState } from "react";
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
-const API_URL = "http://127.0.0.1:8000";
+import { Button, ErrorBanner, Screen } from '@/components/ui';
+import { Colors, Radius, Spacing } from '@/constants/theme';
+import { api } from '@/lib/api';
+
+type Picked = { uri: string; mimeType?: string };
 
 export default function ScanReceiptScreen() {
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [image, setImage] = useState<Picked | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const pickReceipt = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      quality: 1,
-    });
+  const handleResult = (result: ImagePicker.ImagePickerResult) => {
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    setImage({ uri: asset.uri, mimeType: asset.mimeType ?? undefined });
+    setError(null);
+  };
 
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      setError('Camera access is needed to photograph receipts. You can enable it in Settings.');
+      return;
+    }
+    handleResult(await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7 }));
+  };
+
+  const pickFromLibrary = async () => {
+    handleResult(await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 }));
+  };
+
+  const scan = async () => {
+    if (!image) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { expense } = await api.scanAndSaveReceipt(image.uri, image.mimeType);
+      // Open the saved expense so the user can check and correct what was extracted.
+      router.replace({ pathname: '/expense/[id]', params: { id: String(expense.id) } });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Scan failed');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const scanReceipt = async () => {
-  if (!imageUri) return;
-
-  setLoading(true);
-
-  const formData = new FormData();
-
-  const imageResponse = await fetch(imageUri);
-  const blob = await imageResponse.blob();
-
-  formData.append("receipt", blob, "receipt.jpg");
-
-  try {
-    const res = await fetch(`${API_URL}/scan-and-save-receipt`, {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-    const expense = data.expense;
-
-    setResult(
-    `Saved successfully ✅\n\nMerchant: ${expense.merchant}\nAmount: ${expense.currency} ${expense.amount}\nCategory: ${expense.category}\nDate: ${expense.date}`
-    );
-  } catch (err) {
-    console.log(err);
-    setResult("Scan failed.");
-  }
-
-  setLoading(false);
-};
-
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Scan Receipt 📸</Text>
+    <Screen topInset={false}>
       <Text style={styles.subtitle}>
-        Upload a receipt and let AI extract the expense.
+        Take or choose a photo of a receipt. Budget Buddy reads it, saves the expense, and opens it so
+        you can double-check the details.
       </Text>
 
-      <TouchableOpacity style={styles.button} onPress={pickReceipt}>
-        <Text style={styles.buttonText}>Choose Receipt Image</Text>
-      </TouchableOpacity>
+      <View style={styles.row}>
+        {Platform.OS !== 'web' ? (
+          <Button label="📷 Take photo" onPress={takePhoto} style={{ flex: 1 }} disabled={loading} />
+        ) : null}
+        <Button
+          label="🖼 Choose image"
+          variant="secondary"
+          onPress={pickFromLibrary}
+          style={{ flex: 1 }}
+          disabled={loading}
+        />
+      </View>
 
-      {imageUri ? <Image source={{ uri: imageUri }} style={styles.preview} /> : null}
-
-      {imageUri ? (
-        <TouchableOpacity style={styles.button} onPress={scanReceipt}>
-          <Text style={styles.buttonText}>
-            {loading ? "Scanning..." : "Scan with AI"}
-          </Text>
-        </TouchableOpacity>
+      {image ? (
+        <Image source={{ uri: image.uri }} style={styles.preview} contentFit="contain" accessibilityLabel="Selected receipt" />
       ) : null}
 
-      {result ? (
-        <View style={styles.resultBox}>
-          <Text style={styles.resultText}>{result}</Text>
-        </View>
-      ) : null}
+      {error ? <ErrorBanner message={error} /> : null}
 
-      <Link href="/" asChild>
-        <TouchableOpacity style={styles.backButton}>
-          <Text style={styles.buttonText}>Back to Dashboard</Text>
-        </TouchableOpacity>
-      </Link>
-    </ScrollView>
+      {image ? (
+        <Button label={loading ? 'Reading receipt…' : 'Scan & save'} variant="success" onPress={scan} loading={loading} />
+      ) : null}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#111827", padding: 20 },
-  title: { fontSize: 32, color: "white", fontWeight: "bold", marginTop: 50 },
-  subtitle: { color: "#9CA3AF", marginBottom: 25, fontSize: 16 },
-  button: {
-    backgroundColor: "#2563EB",
-    padding: 18,
-    borderRadius: 14,
-    alignItems: "center",
-    marginTop: 15,
-  },
-  backButton: {
-    backgroundColor: "#374151",
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  buttonText: { color: "white", fontWeight: "bold", fontSize: 16 },
+  subtitle: { color: Colors.textSecondary, fontSize: 16, marginBottom: Spacing.xl, lineHeight: 22 },
+  row: { flexDirection: 'row', gap: Spacing.md },
   preview: {
-    width: "100%",
-    height: 350,
-    borderRadius: 14,
-    marginTop: 20,
-  },
-  resultBox: {
-    backgroundColor: "#1F2937",
-    padding: 20,
-    borderRadius: 14,
-    marginTop: 20,
-  },
-  resultText: {
-    color: "white",
+    width: '100%',
+    height: 360,
+    borderRadius: Radius.md,
+    marginVertical: Spacing.xl,
+    backgroundColor: '#000',
   },
 });
