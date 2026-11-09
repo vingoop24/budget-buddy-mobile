@@ -1,7 +1,15 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-import type { Budget, Expense, ExpenseFilters, ExpenseInput, Health, Summary } from './types';
+import type {
+  Budget,
+  Expense,
+  ExpenseFilters,
+  ExpenseInput,
+  Health,
+  ScannedReceipt,
+  Summary,
+} from './types';
 
 const API_PORT = 8000;
 
@@ -123,8 +131,9 @@ export const api = {
   getBudget: () => request<Budget>('/budget'),
   setBudget: (budget: Budget) => request<Budget>('/budget', json('PUT', budget)),
 
-  scanAndSaveReceipt: async (uri: string, mimeType?: string) =>
-    request<{ expense: Expense; source: 'ai' | 'ocr' }>('/scan-and-save-receipt', {
+  /** Reads a receipt without saving; confirm by passing receipt_token to createExpense. */
+  scanReceipt: async (uri: string, mimeType?: string) =>
+    request<ScannedReceipt>('/scan-receipt', {
       method: 'POST',
       body: await imageForm(uri, mimeType),
       timeoutMs: 60000,

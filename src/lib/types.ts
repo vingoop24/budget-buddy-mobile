@@ -20,6 +20,21 @@ export type ExpenseInput = {
   charge_name?: string | null;
   payment_method?: string | null;
   notes?: string | null;
+  receipt_token?: string | null;
+};
+
+export type ScannedField = 'merchant' | 'amount' | 'currency' | 'category' | 'date';
+
+/** Result of POST /scan-receipt: extracted fields to review, nothing saved yet. */
+export type ScannedReceipt = {
+  merchant: string;
+  amount: number;
+  currency: string;
+  category: string;
+  date: string;
+  source: 'ai' | 'ocr';
+  missing: ScannedField[];
+  receipt_token: string;
 };
 
 export type Budget = {

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button, Chip, Field, Label } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { daysAgo, isValidISODate, parseAmount, today } from '@/lib/format';
-import type { Expense, ExpenseInput } from '@/lib/types';
+import type { Expense, ExpenseInput, ScannedField } from '@/lib/types';
 
 type Values = {
   merchant: string;
@@ -18,17 +18,33 @@ type Values = {
 
 type Errors = Partial<Record<keyof Values, string>>;
 
-function initialValues(expense: Expense | undefined, defaultCurrency: string): Values {
+/** Values to pre-fill a new expense with (e.g. from a receipt scan). */
+export type Prefill = Partial<Pick<ExpenseInput, 'merchant' | 'amount' | 'currency' | 'category' | 'date'>>;
+
+function initialValues(
+  expense: Expense | undefined,
+  prefill: Prefill | undefined,
+  defaultCurrency: string,
+): Values {
+  const source = expense ?? prefill;
   return {
-    merchant: expense?.merchant ?? '',
-    amount: expense ? String(expense.amount) : '',
-    currency: expense?.currency ?? defaultCurrency,
-    category: expense?.category ?? 'Other',
-    date: expense?.date ?? today(),
+    merchant: source?.merchant ?? '',
+    amount: source?.amount ? String(source.amount) : '',
+    currency: source?.currency ?? defaultCurrency,
+    category: source?.category ?? 'Other',
+    date: source?.date ?? today(),
     payment_method: expense?.payment_method ?? '',
     notes: expense?.notes ?? '',
   };
 }
+
+const FLAG_MESSAGE: Record<ScannedField, string> = {
+  merchant: "Couldn't read the merchant. Please enter it.",
+  amount: "Couldn't read the total. Please enter it.",
+  currency: 'Currency not found on the receipt. Check it.',
+  category: 'Category was guessed. Check it.',
+  date: 'Date not found on the receipt, so today was used. Check it.',
+};
 
 function validate(v: Values): { errors: Errors; input?: ExpenseInput } {
   const errors: Errors = {};
@@ -55,25 +71,40 @@ function validate(v: Values): { errors: Errors; input?: ExpenseInput } {
 
 export function ExpenseForm({
   expense,
+  prefill,
+  flagged = [],
   categories,
   defaultCurrency,
   submitLabel,
   onSubmit,
 }: {
   expense?: Expense;
+  prefill?: Prefill;
+  /** Fields to highlight for the user to check (e.g. ones a scan couldn't read). */
+  flagged?: ScannedField[];
   categories: string[];
   defaultCurrency: string;
   submitLabel: string;
   onSubmit: (input: ExpenseInput) => Promise<void>;
 }) {
-  const [values, setValues] = useState(() => initialValues(expense, defaultCurrency));
+  const [values, setValues] = useState(() => initialValues(expense, prefill, defaultCurrency));
   const [errors, setErrors] = useState<Errors>({});
   const [saving, setSaving] = useState(false);
+  // A flag clears once the user edits that field.
+  const [unchecked, setUnchecked] = useState<Set<keyof Values>>(() => new Set(flagged));
 
   const set = (key: keyof Values) => (text: string) => {
     setValues((v) => ({ ...v, [key]: text }));
     if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }));
+    if (unchecked.has(key)) {
+      setUnchecked((u) => {
+        const next = new Set(u);
+        next.delete(key);
+        return next;
+      });
+    }
   };
+  const flag = (key: ScannedField) => (unchecked.has(key) ? FLAG_MESSAGE[key] : null);
 
   const submit = async () => {
     const result = validate(values);
@@ -99,6 +130,7 @@ export function ExpenseForm({
         onChangeText={set('merchant')}
         placeholder="e.g. Trader Joe's"
         error={errors.merchant}
+        warning={flag('merchant')}
         autoCapitalize="words"
         returnKeyType="next"
       />
@@ -112,6 +144,7 @@ export function ExpenseForm({
             placeholder="0.00"
             keyboardType="decimal-pad"
             error={errors.amount}
+            warning={flag('amount')}
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -123,11 +156,13 @@ export function ExpenseForm({
             autoCapitalize="characters"
             autoCorrect={false}
             error={errors.currency}
+            warning={flag('currency') ? 'Check this' : null}
           />
         </View>
       </View>
 
       <Label>Category</Label>
+      {flag('category') ? <Text style={styles.warning}>{flag('category')}</Text> : null}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -153,6 +188,7 @@ export function ExpenseForm({
         autoCorrect={false}
         keyboardType="numbers-and-punctuation"
         error={errors.date}
+        warning={flag('date')}
       />
       <View style={[styles.chips, { marginTop: -Spacing.sm, marginBottom: Spacing.lg }]}>
         <Chip label="Today" selected={values.date === today()} onPress={() => set('date')(today())} />
@@ -185,4 +221,5 @@ export function ExpenseForm({
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: Spacing.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  warning: { color: Colors.warning, fontSize: 13, marginTop: -Spacing.xs, marginBottom: Spacing.sm },
 });

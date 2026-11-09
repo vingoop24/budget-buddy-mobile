@@ -10,7 +10,9 @@ AI-powered personal finance app built with React Native and Expo (SDK 56).
   tap to edit, add manually, delete with confirmation
 - **Assistant:** chat with the AI about your spending, with suggested questions
 - **Budget:** set the monthly amount and currency; shows the server connection status
-- **Scan receipt:** take a photo or pick one; the saved expense opens for review
+- **Scan receipt:** take a photo or pick one, review the fields that were read
+  (anything the scan couldn't read is highlighted), then save. Nothing is saved
+  until you confirm.
 
 ## Getting started
 

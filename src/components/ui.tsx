@@ -155,17 +155,24 @@ export function EmptyState({ children }: { children: ReactNode }) {
 export function Field({
   label,
   error,
+  warning,
   ...props
-}: TextInputProps & { label: string; error?: string | null }) {
+}: TextInputProps & { label: string; error?: string | null; warning?: string | null }) {
+  const borderColor = error ? Colors.dangerText : warning ? Colors.warning : undefined;
   return (
     <View style={{ marginBottom: Spacing.lg }}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         placeholderTextColor={Colors.textMuted}
+        accessibilityHint={error ?? warning ?? undefined}
         {...props}
-        style={[styles.input, error ? { borderColor: Colors.dangerText } : null, props.style]}
+        style={[styles.input, borderColor ? { borderColor } : null, props.style]}
       />
-      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
+      {error ? (
+        <Text style={styles.fieldError}>{error}</Text>
+      ) : warning ? (
+        <Text style={[styles.fieldError, { color: Colors.warning }]}>{warning}</Text>
+      ) : null}
     </View>
   );
 }
