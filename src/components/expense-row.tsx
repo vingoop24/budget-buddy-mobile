@@ -9,7 +9,8 @@ export function ExpenseRow({ expense, onDelete }: { expense: Expense; onDelete?:
   return (
     <Link href={{ pathname: '/expense/[id]', params: { id: String(expense.id) } }} asChild>
       <Pressable
-        style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]}
+        // Static style: Link asChild doesn't forward function styles on web.
+        style={styles.row}
         accessibilityLabel={`${expense.merchant}, ${formatMoney(expense.amount, expense.currency)}, ${expense.category}, ${formatDate(expense.date)}. Tap to edit.`}>
         <Text style={styles.emoji}>{categoryEmoji(expense.category)}</Text>
         <View style={styles.middle}>

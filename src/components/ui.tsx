@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { Colors, MaxContentWidth, Radius, Spacing, WebTabBarInset } from '@/constants/theme';
 
 export function Screen({
   children,
@@ -34,7 +34,7 @@ export function Screen({
       style={styles.screen}
       contentContainerStyle={[
         styles.screenContent,
-        { paddingTop: (topInset ? insets.top : 0) + Spacing.xl, paddingBottom: insets.bottom + Spacing.xxl },
+        { paddingTop: (topInset ? insets.top + WebTabBarInset : 0) + Spacing.xl, paddingBottom: insets.bottom + Spacing.xxl },
       ]}
       keyboardShouldPersistTaps="handled"
       refreshControl={

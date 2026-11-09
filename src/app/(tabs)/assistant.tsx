@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Chip, styles as ui } from '@/components/ui';
-import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { Colors, MaxContentWidth, Radius, Spacing, WebTabBarInset } from '@/constants/theme';
 import { api } from '@/lib/api';
 
 type Message = { id: number; role: 'user' | 'ai' | 'error'; text: string };
@@ -56,7 +56,7 @@ export default function AssistantScreen() {
       <ScrollView
         ref={scrollRef}
         style={{ flex: 1 }}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.xl }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + WebTabBarInset + Spacing.xl }]}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
         keyboardShouldPersistTaps="handled">
         <View style={ui.inner}>

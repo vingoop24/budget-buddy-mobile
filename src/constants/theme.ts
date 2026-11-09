@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 /** App-wide design tokens. The app uses a single dark theme (see app.json userInterfaceStyle). */
 
 export const Colors = {
@@ -35,3 +37,6 @@ export const Radius = {
 } as const;
 
 export const MaxContentWidth = 720;
+
+/** On web, native tabs render a floating bar over the top of the screen; tab screens pad below it. */
+export const WebTabBarInset = Platform.OS === 'web' ? 64 : 0;
