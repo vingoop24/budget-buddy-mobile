@@ -1,6 +1,6 @@
 # Budget Buddy Mobile
 
-AI-powered personal finance app built with React Native and Expo (SDK 56).
+AI-powered personal finance app built with React Native and Expo (SDK 58).
 
 ## Features
 
