@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { ExpenseForm } from '@/components/expense-form';
 import { ErrorBanner, Loading, Screen } from '@/components/ui';
 import { useApi } from '@/hooks/use-api';
+import { alertAfterSave } from '@/lib/alerts';
 import { api } from '@/lib/api';
 import { notify } from '@/lib/confirm';
 
@@ -25,6 +26,7 @@ export default function NewExpenseScreen() {
             try {
               await api.createExpense(input);
               router.back();
+              alertAfterSave(input);
             } catch (err) {
               notify('Could not save', err instanceof Error ? err.message : String(err));
             }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { CategoryLimitsEditor } from '@/components/category-limits-editor';
 import { Button, Card, ErrorBanner, Field, Loading, ProgressBar, Screen, SectionTitle, Title } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
 import { useApi } from '@/hooks/use-api';
@@ -104,6 +105,12 @@ export default function BudgetScreen() {
         Only expenses in this currency count toward your budget. Others are listed separately.
       </Text>
       <Button label="Save budget" onPress={save} loading={saving} disabled={!s} />
+
+      <SectionTitle>Category limits</SectionTitle>
+      <Text style={styles.hint}>
+        Set a monthly cap for any category. You'll get a warning at 80% and an alert when you go over.
+      </Text>
+      <CategoryLimitsEditor currency={s?.currency ?? 'USD'} onChange={summary.reload} />
 
       <SectionTitle>Server</SectionTitle>
       <Card>

@@ -7,6 +7,7 @@ import { ExpenseForm } from '@/components/expense-form';
 import { Button, ErrorBanner, Loading, Screen, SectionTitle } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useApi } from '@/hooks/use-api';
+import { alertAfterSave } from '@/lib/alerts';
 import { api } from '@/lib/api';
 import { confirm, notify } from '@/lib/confirm';
 import { formatMoney } from '@/lib/format';
@@ -54,6 +55,7 @@ export default function EditExpenseScreen() {
               try {
                 await api.updateExpense(id, input);
                 router.back();
+                alertAfterSave(input);
               } catch (err) {
                 notify('Could not save', err instanceof Error ? err.message : String(err));
               }

@@ -44,6 +44,33 @@ export type Budget = {
 
 export type BudgetStatus = 'good' | 'warning' | 'over_budget';
 
+export type CategoryBudget = {
+  category: string;
+  amount: number;
+};
+
+/** A category limit with this month's spending against it. */
+export type CategoryBudgetStatus = {
+  category: string;
+  limit: number;
+  spent: number;
+  remaining: number;
+  percent_used: number;
+  status: BudgetStatus;
+};
+
+export type BudgetAlert = {
+  level: 'warning' | 'over';
+  category: string | null; // null = the overall monthly budget
+  message: string;
+};
+
+export type Trends = {
+  currency: string;
+  monthly_budget: number;
+  months: { month: string; total_spent: number }[];
+};
+
 export type Summary = {
   month: string; // YYYY-MM
   monthly_budget: number;
@@ -55,6 +82,8 @@ export type Summary = {
   advice: string;
   expense_count: number;
   category_totals: Record<string, number>;
+  category_budgets: CategoryBudgetStatus[];
+  alerts: BudgetAlert[];
   other_currency_totals: Record<string, number>;
   insights: string[];
   recent_expenses: Expense[];

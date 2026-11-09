@@ -8,6 +8,7 @@ import { ExpenseForm, type Prefill } from '@/components/expense-form';
 import { Button, Card, ErrorBanner, Screen } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useApi } from '@/hooks/use-api';
+import { alertAfterSave } from '@/lib/alerts';
 import { api } from '@/lib/api';
 import { notify } from '@/lib/confirm';
 import type { ScannedReceipt } from '@/lib/types';
@@ -105,6 +106,7 @@ export default function ScanReceiptScreen() {
             try {
               await api.createExpense({ ...input, receipt_token: scan.receipt_token });
               router.back();
+              alertAfterSave(input);
             } catch (err) {
               notify('Could not save', err instanceof Error ? err.message : String(err));
             }

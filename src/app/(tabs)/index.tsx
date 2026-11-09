@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 
+import { AlertList, CategoryBudgetRow, STATUS_COLOR, TrendChart } from '@/components/budget-widgets';
 import { ExpenseRow } from '@/components/expense-row';
 import { MonthPicker } from '@/components/month-picker';
 import {
@@ -23,15 +24,14 @@ import { confirm, notify } from '@/lib/confirm';
 import { currentMonth, formatMoney } from '@/lib/format';
 import type { Expense } from '@/lib/types';
 
-const STATUS_COLOR = {
-  good: Colors.success,
-  warning: Colors.warning,
-  over_budget: Colors.danger,
-} as const;
-
 export default function DashboardScreen() {
   const [month, setMonth] = useState(currentMonth());
-  const { data, error, loading, reload } = useApi(`summary:${month}`, () => api.summary(month));
+  const { data, error, loading, reload: reloadSummary } = useApi(`summary:${month}`, () => api.summary(month));
+  const trends = useApi(`trends:${month}`, () => api.trends(6, month));
+  const reload = () => {
+    reloadSummary();
+    trends.reload();
+  };
   const { width } = useWindowDimensions();
   const chartWidth = Math.min(width, MaxContentWidth) - Spacing.xl * 2;
 
@@ -66,6 +66,7 @@ export default function DashboardScreen() {
 
       {data ? (
         <>
+          <AlertList alerts={data.alerts} />
           <Card>
             <Text style={styles.label}>Spent of {money(data.monthly_budget)}</Text>
             <Text style={styles.big}>{money(data.total_spent)}</Text>
@@ -88,6 +89,22 @@ export default function DashboardScreen() {
             />
           </View>
 
+          {data.category_budgets.length ? (
+            <>
+              <SectionTitle
+                right={
+                  <Link href="/budget" style={styles.link}>
+                    Edit limits
+                  </Link>
+                }>
+                Category budgets
+              </SectionTitle>
+              {data.category_budgets.map((c) => (
+                <CategoryBudgetRow key={c.category} item={c} currency={data.currency} />
+              ))}
+            </>
+          ) : null}
+
           <SectionTitle>Spending breakdown</SectionTitle>
           {pieData.length ? (
             <PieChart
@@ -102,6 +119,10 @@ export default function DashboardScreen() {
           ) : (
             <EmptyState>No spending recorded for this month yet.</EmptyState>
           )}
+
+          <SectionTitle>Last 6 months</SectionTitle>
+          {trends.data ? <TrendChart trends={trends.data} width={chartWidth} /> : null}
+          {trends.error ? <ErrorBanner message={trends.error} onRetry={trends.reload} /> : null}
 
           <SectionTitle>Insights</SectionTitle>
           {data.insights.map((insight) => (

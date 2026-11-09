@@ -3,12 +3,14 @@ import { Platform } from 'react-native';
 
 import type {
   Budget,
+  CategoryBudget,
   Expense,
   ExpenseFilters,
   ExpenseInput,
   Health,
   ScannedReceipt,
   Summary,
+  Trends,
 } from './types';
 
 const API_PORT = 8000;
@@ -129,6 +131,12 @@ export const api = {
   receiptUrl: (id: number) => `${getApiUrl()}/expenses/${id}/receipt`,
 
   getBudget: () => request<Budget>('/budget'),
+  categoryBudgets: () => request<CategoryBudget[]>('/category-budgets'),
+  setCategoryBudget: (category: string, amount: number) =>
+    request<CategoryBudget>(`/category-budgets/${encodeURIComponent(category)}`, json('PUT', { amount })),
+  deleteCategoryBudget: (category: string) =>
+    request<void>(`/category-budgets/${encodeURIComponent(category)}`, { method: 'DELETE' }),
+  trends: (months = 6, end?: string) => request<Trends>(`/trends${query({ months: String(months), end })}`),
   setBudget: (budget: Budget) => request<Budget>('/budget', json('PUT', budget)),
 
   /** Reads a receipt without saving; confirm by passing receipt_token to createExpense. */
